@@ -1,0 +1,114 @@
+import { useState } from 'react';
+import { Menu, X, Sparkles } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+
+function Header() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const location = useLocation();
+
+  const isActive = (path) => location.pathname === path;
+
+  return (
+    <header className="bg-white/80 backdrop-blur-md border-b-4 border-orange-200 fixed w-full top-0 z-50 shadow-lg">
+      <div className="container mx-auto px-4 md:px-6">
+        <div className="flex items-center justify-between h-16 md:h-20">
+          {/* Logo */}
+          <Link to="/" className="flex items-center group">
+            <div className="flex items-center gap-2">
+              <div className="bg-gradient-to-r from-orange-400 to-pink-400 w-10 h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:rotate-12 transition-transform duration-300">
+                <Sparkles className="text-white" size={24} />
+              </div>
+              <div className="text-2xl md:text-3xl font-bold">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-pink-500">IN</span>
+                <span className="text-gray-800">xyz</span>
+              </div>
+            </div>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex gap-2 lg:gap-4">
+            <Link
+              to="/"
+              className={`px-6 py-2 rounded-full text-base lg:text-lg font-bold transition-all duration-300 transform hover:scale-105 ${
+                isActive('/') 
+                  ? 'bg-gradient-to-r from-orange-400 to-pink-400 text-white shadow-lg' 
+                  : 'text-gray-700 hover:bg-orange-50'
+              }`}
+            >
+             Home
+            </Link>
+            <Link
+              to="/about"
+              className={`px-6 py-2 rounded-full text-base lg:text-lg font-bold transition-all duration-300 transform hover:scale-105 ${
+                isActive('/about') 
+                  ? 'bg-gradient-to-r from-pink-400 to-purple-400 text-white shadow-lg' 
+                  : 'text-gray-700 hover:bg-pink-50'
+              }`}
+            >
+              About
+            </Link>
+            <Link
+              to="/catagories"
+              className={`px-6 py-2 rounded-full text-base lg:text-lg font-bold transition-all duration-300 transform hover:scale-105 ${
+                isActive('/catagories') 
+                  ? 'bg-gradient-to-r from-purple-400 to-blue-400 text-white shadow-lg' 
+                  : 'text-gray-700 hover:bg-purple-50'
+              }`}
+            >
+               Categories
+            </Link>
+          </nav>
+
+          {/* Mobile Menu Button */}
+          <button 
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="md:hidden bg-gradient-to-r from-orange-400 to-pink-400 text-white p-3 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
+          >
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+
+        {/* Mobile Navigation */}
+        {isMenuOpen && (
+          <nav className="md:hidden py-4 border-t-2 border-orange-200 space-y-2">
+            <Link 
+              to="/" 
+              className={`block py-3 px-4 rounded-2xl font-bold transition-all duration-300 ${
+                isActive('/') 
+                  ? 'bg-gradient-to-r from-orange-400 to-pink-400 text-white shadow-lg' 
+                  : 'text-gray-700 hover:bg-orange-50'
+              }`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Home
+            </Link>
+            <Link 
+              to="/about" 
+              className={`block py-3 px-4 rounded-2xl font-bold transition-all duration-300 ${
+                isActive('/about') 
+                  ? 'bg-gradient-to-r from-pink-400 to-purple-400 text-white shadow-lg' 
+                  : 'text-gray-700 hover:bg-pink-50'
+              }`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              About
+            </Link>
+            <Link 
+              to="/catagories" 
+              className={`block py-3 px-4 rounded-2xl font-bold transition-all duration-300 ${
+                isActive('/catagories') 
+                  ? 'bg-gradient-to-r from-purple-400 to-blue-400 text-white shadow-lg' 
+                  : 'text-gray-700 hover:bg-purple-50'
+              }`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+               Categories
+            </Link>
+          </nav>
+        )}
+      </div>
+    </header>
+  );
+}
+
+export default Header;
