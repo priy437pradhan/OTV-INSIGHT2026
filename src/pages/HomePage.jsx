@@ -320,7 +320,7 @@ export default function HomePage() {
       if (window.google && !isInitializedRef.current) {
         try {
           window.google.accounts.id.initialize({
-            client_id: '881133482472-t9qv71vlrd7u5lc03mfc7brp8p2fknv7.apps.googleusercontent.com',
+            client_id: '881133482472-4ckamgbvg4ipr373uqfl3jg94rh6dmlb.apps.googleusercontent.com',
             callback: handleCredentialResponse,
             ux_mode: 'popup',
             auto_select: false,
