@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
-import { Calendar, Award, Trophy, Instagram, Heart, Film, Star, Sparkles, Camera, LogOut, User } from 'lucide-react';
+import { useEffect, useRef, useCallback } from 'react';
+import { Calendar, Award, Trophy, Instagram, Heart, Film, Star, Sparkles, Camera } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 function FloatingIcons() {
   const icons = [
@@ -34,39 +35,12 @@ function FloatingIcons() {
   );
 }
 
-function HeroSection({ user, onSignOut, googleButtonRef }) {
+function HeroSection({ googleButtonRef }) {
+  const { user } = useAuth();
+
   return (
     <section id="home" className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-100 via-orange-50 to-yellow-100 pt-16 md:pt-20 relative overflow-hidden">
       <FloatingIcons />
-      
-      {user && (
-        <div className="absolute top-6 right-6 z-30">
-          <div className="bg-white rounded-full shadow-xl p-2 flex items-center gap-3 pr-4">
-            {user.picture ? (
-              <img 
-                src={user.picture} 
-                alt={user.name}
-                className="w-10 h-10 rounded-full border-2 border-orange-400"
-              />
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-pink-400 flex items-center justify-center">
-                <User className="text-white" size={20} />
-              </div>
-            )}
-            <div className="hidden md:block">
-              <p className="text-sm font-bold text-gray-800">{user.name}</p>
-              <p className="text-xs text-gray-500">{user.email}</p>
-            </div>
-            <button
-              onClick={onSignOut}
-              className="ml-2 p-2 hover:bg-gray-100 rounded-full transition-colors"
-              title="Sign Out"
-            >
-              <LogOut size={18} className="text-gray-600" />
-            </button>
-          </div>
-        </div>
-      )}
 
       <div className="container mx-auto px-4 md:px-6 text-center relative z-20">
         <div className="inline-block mb-6 px-6 py-2 bg-white rounded-full shadow-lg">
@@ -294,22 +268,37 @@ function Footer() {
 }
 
 export default function HomePage() {
-  const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
   const googleButtonRef = useRef(null);
   const isInitializedRef = useRef(false);
 
-  useEffect(() => {
-    // Check for stored user
-    const storedUser = sessionStorage.getItem('insight2025_user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch {
-        sessionStorage.removeItem('insight2025_user');
-      }
-    }
+  // Define handleCredentialResponse BEFORE useEffect
+  const handleCredentialResponse = useCallback((response) => {
+    try {
+      const base64Url = response.credential.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map((c) => {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
 
+      const userData = JSON.parse(jsonPayload);
+      
+      const userInfo = {
+        name: userData.name,
+        email: userData.email,
+        picture: userData.picture,
+        sub: userData.sub
+      };
+
+      login(userInfo);
+      
+    } catch (error) {
+      console.error('Error processing sign-in:', error);
+      alert('Sign-in failed. Please try again.');
+    }
+  }, [login]);
+
+  useEffect(() => {
     // Load Google Sign-In script
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
@@ -326,8 +315,8 @@ export default function HomePage() {
             auto_select: false,
           });
 
-          // Render the button if user is not signed in
-          if (!storedUser && googleButtonRef.current) {
+          // Render the button
+          if (googleButtonRef.current) {
             window.google.accounts.id.renderButton(
               googleButtonRef.current,
               {
@@ -359,63 +348,7 @@ export default function HomePage() {
         document.body.removeChild(script);
       }
     };
-  }, []);
-
-  const handleCredentialResponse = (response) => {
-    setIsLoading(true);
-    
-    try {
-      const base64Url = response.credential.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map((c) => {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
-
-      const userData = JSON.parse(jsonPayload);
-      
-      const userInfo = {
-        name: userData.name,
-        email: userData.email,
-        picture: userData.picture,
-        sub: userData.sub
-      };
-
-      setUser(userInfo);
-      sessionStorage.setItem('insight2025_user', JSON.stringify(userInfo));
-      
-    } catch (error) {
-      console.error('Error processing sign-in:', error);
-      alert('Sign-in failed. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSignOut = () => {
-    setUser(null);
-    sessionStorage.removeItem('insight2025_user');
-    
-    if (window.google) {
-      window.google.accounts.id.disableAutoSelect();
-    }
-
-    // Re-render the button after sign out
-    setTimeout(() => {
-      if (window.google && googleButtonRef.current) {
-        window.google.accounts.id.renderButton(
-          googleButtonRef.current,
-          {
-            theme: 'filled_blue',
-            size: 'large',
-            text: 'signin_with',
-            shape: 'pill',
-            logo_alignment: 'left',
-            width: 280
-          }
-        );
-      }
-    }, 100);
-  };
+  }, [handleCredentialResponse]);
 
   return (
     <div className="bg-white min-h-screen">
@@ -436,20 +369,7 @@ export default function HomePage() {
         }
       `}</style>
       
-      {isLoading && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-8 shadow-2xl">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
-            <p className="mt-4 text-gray-700 font-medium">Signing in...</p>
-          </div>
-        </div>
-      )}
-      
-      <HeroSection 
-        user={user} 
-        onSignOut={handleSignOut}
-        googleButtonRef={googleButtonRef}
-      />
+      <HeroSection googleButtonRef={googleButtonRef} />
       <VotingSection />
       <GuestsSection />
       <SponsorsSection />
